@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的工作待辦清單</title>
+    <title>工作待辦管理系統</title>
     <style>
         :root {
             --primary-color: #4a90e2;
             --success-color: #27ae60;
-            --bg-color: #f5f7fa;
+            --bg-color: #f0f2f5;
             --text-color: #333;
+            --gray-text: #777;
         }
 
         body {
@@ -21,75 +22,112 @@
             height: 100vh;
         }
 
-        /* 主容器：讓清單區域可以捲動 */
         .container {
             flex: 1;
             overflow-y: auto;
             padding: 20px;
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             width: 100%;
             box-sizing: border-box;
-            padding-bottom: 120px; /* 為底部輸入區預留空間 */
+            padding-bottom: 160px; /* 增加底部空間 */
         }
 
-        h2 { color: var(--text-color); border-left: 5px solid var(--primary-color); padding-left: 10px; }
+        h2 { color: var(--text-color); border-left: 5px solid var(--primary-color); padding-left: 12px; margin-bottom: 20px; }
 
         .task-card {
             background: white;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 18px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: transform 0.2s;
         }
 
-        .task-info { display: flex; flex-direction: column; }
-        .task-title { font-weight: bold; font-size: 1.1rem; margin-bottom: 5px; }
-        .task-date { font-size: 0.85rem; color: #666; }
+        .task-info { display: flex; flex-direction: column; gap: 5px; }
+        .task-title { font-weight: bold; font-size: 1.2rem; color: #2c3e50; }
+        .task-meta { font-size: 0.85rem; color: var(--gray-text); display: flex; gap: 15px; }
+        .deadline-tag { color: #d35400; font-weight: bold; }
 
         .btn-done {
             background-color: var(--success-color);
             color: white;
             border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
+            padding: 10px 20px;
+            border-radius: 6px;
             cursor: pointer;
             font-weight: bold;
+            transition: background 0.3s;
         }
+        .btn-done:hover { background-color: #219150; }
 
-        .history-section { margin-top: 40px; opacity: 0.7; }
-        .history-card { background: #e0e0e0; text-decoration: line-through; color: #777; }
+        .history-section { margin-top: 50px; border-top: 2px dashed #ccc; padding-top: 20px; }
+        .history-card { background: #f9f9f9; border: 1px solid #ddd; opacity: 0.8; }
+        .history-card .task-title { text-decoration: line-through; color: #888; }
 
-        /* 底部輸入區域 */
-        .input-area {
+        /* 底部輸入區域 - 優化寬度 */
+        .input-area-container {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
             background: white;
-            padding: 20px;
-            box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
+            padding: 20px 0;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
             display: flex;
             justify-content: center;
-            gap: 10px;
         }
 
-        input[type="text"] { flex: 1; max-width: 400px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
-        input[type="date"] { padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
-        .btn-add { background-color: var(--primary-color); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+        .input-form {
+            width: 90%;
+            max-width: 850px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: flex-end;
+        }
+
+        .input-group { display: flex; flex-direction: column; gap: 5px; }
         
-        .empty-msg { text-align: center; color: #999; margin-top: 20px; }
+        /* 文字輸入框寬度加大 */
+        .group-title { flex: 2; min-width: 300px; } 
+        .group-date { flex: 0.8; min-width: 150px; }
+
+        label { font-size: 0.9rem; font-weight: bold; color: #555; }
+
+        input[type="text"] { 
+            padding: 12px; 
+            border: 2px solid #ddd; 
+            border-radius: 6px; 
+            font-size: 1rem;
+            outline: none;
+        }
+        input[type="text"]:focus { border-color: var(--primary-color); }
+
+        input[type="date"] { padding: 11px; border: 2px solid #ddd; border-radius: 6px; }
+
+        .btn-add { 
+            background-color: var(--primary-color); 
+            color: white; 
+            border: none; 
+            padding: 12px 25px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: bold;
+            height: 48px;
+        }
+        .btn-add:hover { background-color: #357abd; }
+
+        .empty-msg { text-align: center; color: #999; margin-top: 20px; font-style: italic; }
     </style>
 </head>
 <body>
 
 <div class="container" id="app">
     <section>
-        <h2>待辦事項</h2>
+        <h2>待辦事項 (進行中)</h2>
         <div id="pendingTasks"></div>
     </section>
 
@@ -99,17 +137,27 @@
     </section>
 </div>
 
-<div class="input-area">
-    <input type="text" id="taskTitle" placeholder="請輸入工作內容...">
-    <input type="date" id="taskDate">
-    <button class="btn-add" onclick="addTask()">新增待辦</button>
+<div class="input-area-container">
+    <div class="input-form">
+        <div class="input-group group-title">
+            <label for="taskTitle">工作內容 (輸入後按 Enter 也可以新增)</label>
+            <input type="text" id="taskTitle" placeholder="請描述要做的工作...">
+        </div>
+        <div class="input-group group-date">
+            <label for="taskDate">預計完成日期 (在此日期前完成)</label>
+            <input type="date" id="taskDate">
+        </div>
+        <button class="btn-add" onclick="addTask()">新增待辦</button>
+    </div>
 </div>
 
 <script>
     let tasks = JSON.parse(localStorage.getItem('myTasks')) || [];
 
-    // 初始化：設定日期選擇器預設為今天
-    document.getElementById('taskDate').valueAsDate = new Date();
+    // 初始化日期：預設為明天
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    document.getElementById('taskDate').valueAsDate = tomorrow;
 
     function render() {
         const pendingContainer = document.getElementById('pendingTasks');
@@ -121,14 +169,19 @@
         const pendingList = tasks.filter(t => !t.completed);
         const historyList = tasks.filter(t => t.completed);
 
-        if (pendingList.length === 0) pendingContainer.innerHTML = '<p class="empty-msg">目前沒有待辦事項，休息一下吧！</p>';
+        if (pendingList.length === 0) {
+            pendingContainer.innerHTML = '<p class="empty-msg">目前沒有待辦事項，太棒了！</p>';
+        }
         
         pendingList.forEach(task => {
             pendingContainer.innerHTML += `
                 <div class="task-card">
                     <div class="task-info">
                         <span class="task-title">${task.title}</span>
-                        <span class="task-date">截止日期: ${task.date}</span>
+                        <div class="task-meta">
+                            <span>🕒 登錄日期: ${task.createdDate}</span>
+                            <span class="deadline-tag">📅 預計完成日期: ${task.deadline} 前</span>
+                        </div>
                     </div>
                     <button class="btn-done" onclick="completeTask(${task.id})">結案</button>
                 </div>
@@ -140,9 +193,12 @@
                 <div class="task-card history-card">
                     <div class="task-info">
                         <span class="task-title">${task.title}</span>
-                        <span class="task-date">完成於: ${task.date}</span>
+                        <div class="task-meta">
+                            <span>登錄: ${task.createdDate}</span>
+                            <span>完成: ${new Date().toLocaleDateString()}</span>
+                        </div>
                     </div>
-                    <span style="font-size: 0.8rem;">已存檔</span>
+                    <span style="color: #27ae60; font-weight: bold;">✓ 已完成</span>
                 </div>
             `;
         });
@@ -159,18 +215,19 @@
             return;
         }
 
+        const today = new Date();
         const newTask = {
             id: Date.now(),
             title: titleInput.value,
-            date: dateInput.value,
+            deadline: dateInput.value,
+            createdDate: today.toLocaleDateString(), // 紀錄登錄當天的日期
             completed: false
         };
 
-        tasks.push(newTask);
+        tasks.unshift(newTask); // 新增的排在最上面
         titleInput.value = '';
         render();
         
-        // 自動捲動到最上方看新任務
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -182,7 +239,6 @@
         }
     }
 
-    // 監聽 Enter 鍵
     document.getElementById('taskTitle').addEventListener('keypress', function (e) {
         if (e.key === 'Enter') addTask();
     });

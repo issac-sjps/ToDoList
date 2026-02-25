@@ -8,6 +8,7 @@
         :root {
             --primary-color: #4a90e2;
             --success-color: #27ae60;
+            --danger-color: #e74c3c; /* 新增危險/緊急顏色 */
             --bg-color: #f0f2f5;
             --text-color: #333;
             --gray-text: #777;
@@ -30,7 +31,7 @@
             margin: 0 auto;
             width: 100%;
             box-sizing: border-box;
-            padding-bottom: 160px; /* 增加底部空間 */
+            padding-bottom: 160px;
         }
 
         h2 { color: var(--text-color); border-left: 5px solid var(--primary-color); padding-left: 12px; margin-bottom: 20px; }
@@ -48,8 +49,12 @@
 
         .task-info { display: flex; flex-direction: column; gap: 5px; }
         .task-title { font-weight: bold; font-size: 1.2rem; color: #2c3e50; }
-        .task-meta { font-size: 0.85rem; color: var(--gray-text); display: flex; gap: 15px; }
+        .task-meta { font-size: 0.85rem; color: var(--gray-text); display: flex; gap: 15px; align-items: center; }
         .deadline-tag { color: #d35400; font-weight: bold; }
+
+        /* 新增倒數天數的顏色樣式 */
+        .countdown-green { color: var(--success-color); font-weight: bold; font-size: 1.1em; }
+        .countdown-red { color: var(--danger-color); font-weight: bold; font-size: 1.1em; }
 
         .btn-done {
             background-color: var(--success-color);
@@ -67,7 +72,6 @@
         .history-card { background: #f9f9f9; border: 1px solid #ddd; opacity: 0.8; }
         .history-card .task-title { text-decoration: line-through; color: #888; }
 
-        /* 底部輸入區域 - 優化寬度 */
         .input-area-container {
             position: fixed;
             bottom: 0;
@@ -91,7 +95,6 @@
 
         .input-group { display: flex; flex-direction: column; gap: 5px; }
         
-        /* 文字輸入框寬度加大 */
         .group-title { flex: 2; min-width: 300px; } 
         .group-date { flex: 0.8; min-width: 150px; }
 
@@ -173,14 +176,37 @@
             pendingContainer.innerHTML = '<p class="empty-msg">目前沒有待辦事項，太棒了！</p>';
         }
         
+        // 取得今天的日期 (清除時間部分，以便準確計算天數)
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
         pendingList.forEach(task => {
+            // 計算倒數天數
+            const deadlineDate = new Date(task.deadline);
+            deadlineDate.setHours(0, 0, 0, 0);
+            
+            const diffTime = deadlineDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            let countdownHtml = "";
+            if (diffDays > 5) {
+                countdownHtml = `(剩餘 <span class="countdown-green">${diffDays}</span> 天)`;
+            } else if (diffDays > 0 && diffDays <= 5) {
+                countdownHtml = `(剩餘 <span class="countdown-red">${diffDays}</span> 天)`;
+            } else if (diffDays === 0) {
+                countdownHtml = `(<span class="countdown-red">今天到期！</span>)`;
+            } else {
+                countdownHtml = `(<span class="countdown-red">已逾期 ${Math.abs(diffDays)} 天</span>)`;
+            }
+
             pendingContainer.innerHTML += `
                 <div class="task-card">
                     <div class="task-info">
                         <span class="task-title">${task.title}</span>
                         <div class="task-meta">
                             <span>🕒 登錄日期: ${task.createdDate}</span>
-                            <span class="deadline-tag">📅 預計完成日期: ${task.deadline} 前</span>
+                            <span class="deadline-tag">📅 預計完成日期: ${task.deadline}</span>
+                            <span>${countdownHtml}</span>
                         </div>
                     </div>
                     <button class="btn-done" onclick="completeTask(${task.id})">結案</button>
@@ -220,11 +246,11 @@
             id: Date.now(),
             title: titleInput.value,
             deadline: dateInput.value,
-            createdDate: today.toLocaleDateString(), // 紀錄登錄當天的日期
+            createdDate: today.toLocaleDateString(),
             completed: false
         };
 
-        tasks.unshift(newTask); // 新增的排在最上面
+        tasks.unshift(newTask);
         titleInput.value = '';
         render();
         
